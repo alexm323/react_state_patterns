@@ -1,0 +1,323 @@
+React State Patterns Intro 
+_______________________________________________
+Goals - 
+- Pass event handlers down as props to child components
+- Understand the key prop that React asks for when mapping over data 
+- Use the callback pattern for useState to ensure state changes happen as expected
+- Learn about storing mutable items in state and updating them 
+
+_______________________________________________
+How use state works
+_______________________________________________
+
+Rules of hooks 
+
+we have a simple counter and when we click we just increase the counter by 1 
+
+when we render these components , it calls the SimpleCounter function 
+
+just like any other function when it is called every line runs 
+
+looking at the react components extension we can see the state changing 
+
+everytime num changes it is going to be added
+
+we can see that the function runs everytime we change the state 
+
+the magic is that useState is persisting 
+
+somewhere in react , react has a way of keeping track of where a component is coming from 
+
+it is just storing it somewhere about the component, because we can have multiple of these on the page and react remembers everything 
+
+and this is why we can have multiple of the same components 
+and react can identify and associate the use state calls with something it has stored externally 
+
+keeping track of who has state reserved 
+
+react reads the states in order of how they appear so it  can remember where certain components are 
+
+you can not use conditionals with hooks for that reason
+
+the components need to be rendered in the same way each time 
+
+because the first time react loads it sets a piece of state 
+
+only call hooks from react functions 
+because react needs to associate a piece of state within a component 
+
+never use a conditional or a loop for hooks 
+they need to be at the top most level within a component 
+
+
+_______________________________________________
+setState Callback Form
+_______________________________________________
+Changing State 
+
+always change the state using the second destructured value to .useState() 
+
+const [data,setData] = useState(initialState)
+
+when we call setData it looks up the current data not the initial state 
+
+so in our clicker example we are going to try to move up mby 2 
+
+    const clickUp2 = () => {
+        setNum(num + 1)
+        setNum(num + 1)
+    }
+
+this does not work because it is not going to finish setting num before the other one runs, so we are asking react to please set num to 1 twice 
+
+but there are many times where you want to update values based on some function that might take time 
+
+and if we want to guarantee that we wait for that value before moving on then we have the option of passing in a callback 
+
+stting state using state 
+
+we want to pass in a state update as a function so that it runs once previous state updates are finished 
+
+    const clickUpBy2 = () => {
+        setNum(n => n + 1)
+        setNum(n => n + 1)
+    }
+
+
+
+
+_______________________________________________
+Deleting Example
+_______________________________________________
+
+Passing functions to child components 
+
+want to be able to delete something from an array by clicking on some LI 
+
+const NumbersList = () => {
+    const [numbers, setNumbers] = useState([2, 5, 7, 11, 12, 18]);
+    const remove = (num) => {
+        setNumbers(numbers.filter(n => n !== num))
+        console.log("Removing", num)
+    }
+
+    return (
+        <ul>
+            {numbers.map(n => (
+                <li>
+                    <button onClick={() => remove(n)}>{n}</button>
+                </li>
+            ))}
+        </ul>
+    )
+}
+
+we end up with something like this and we are going through and using the filter array method to cut out whatever num we are clicking on by calling the remove function which removes it from the array, and then since the state changed it rerenders the component and that uses the udpated values in the component so it renders less of them 
+
+
+_______________________________________________
+Passing Functions as props
+_______________________________________________
+
+we are going to be making a new component to piece some of our NumbersList component out more 
+
+call it numberitem
+
+the current problem we are facing is that we are not passing down the state 
+
+we have a method called remove that we are setting in our NumbersList component but now there is a NumberItem component that does not have access to remove 
+
+-A parent component that has a function
+-We are going to pass it down as a prop to the child component 
+-the child component invokes the prop 
+-the parent function is called and it has access to setNumbers and we are just passing down the reference 
+
+the pattern we want to get used to is introducing a new function something called 
+
+handleClick 
+handleRemove etc 
+
+when we set the state in the parent , it is changing the state and then it rerenders and it needs to figure out how to rerender it 
+
+const NumbersList = () => {
+    const [numbers, setNumbers] = useState([2, 5, 7, 11, 12, 18]);
+    const remove = (num) => {
+        setNumbers(numbers.filter(n => n !== num))
+        console.log("Removing", num)
+    }
+
+    return (
+        <ul>
+            {numbers.map(n => (
+                <NumberItem number={n} remove={remove} />
+            ))}
+        </ul>
+    )
+}
+
+
+
+_______________________________________________
+Another Option For Passing Functions
+_______________________________________________
+
+An alternative is to pass in an inline arrow function inside of the props to the child component 
+
+in one version we are doing it inline in the parent component, in the original we are defining it in the child 
+
+sometimes though we might have additional logic inside of the component that we want to take care of 
+
+
+_______________________________________________
+More Keys 
+_______________________________________________
+
+Lists and Keys 
+
+the key prop , when we are working with a list and rendering adjacent elements , react can get confused and it will warn is if we are missing a keyprop 
+
+react will warn us that each child in a list should have a unique key prop 
+
+react needs the keyprop to be able to keep track of different elements 
+
+you need to be able to keep your data in sync with what you are being shown 
+
+every key should be a unique value 
+
+there is an issue though , if the data is not unique then there will be a duplicate key 
+
+if you have duplicate keys you can get all kinds of messed up behavior 
+
+the idea is that you give react unique identifiers to keep track of these thing same
+picking a key 
+
+Best way to use string that uniquely identifies items among silinggs 
+
+most often you would use ids from your data from keys 
+
+Last resourt , you can use the iteration index , based off of the array position. 
+
+it is only as a last resort 
+
+react can get confused if you are reordering things and the indices are being changed 
+
+there are tools such as uuid that will very simply generate these random unique identifiers
+
+we can import it and use a particular method called v4 ,
+
+but you dont want to be generating a random number every render 
+
+because if we did something like remove , it is going to randomly regenerate the keys 
+
+you want the keys to be unqique or somehow identified with your component 
+
+does not have to be a numeric identifier , the keys are turned into strings 
+
+
+
+_______________________________________________
+Mutable State Circles Demo
+_______________________________________________
+Mutable Data Structures 
+
+So we have just had primitive values (string and numbers) in our state 
+
+we are going to be making circles that go around the page at random locations with a number on them and then when you click that circle you can move it to another location 
+
+we are making colored circled and we are rendering them with a map . the same pattern we have seen a few times now 
+
+next we want to be able to add circles in 
+
+so we are going to add in state 
+
+const ColoredCircles = () => {
+    const circles = ['cornflowerblue', 'peachpuff', 'lavender']
+    return (
+        <div>
+            {circles.map((color, idx) => (
+                <Circle color={color} idx={idx} key={idx} />
+            ))}
+            <button onClick={() => circles.push}>ADD</button>
+        </div>
+    )
+}
+
+
+here we have added a button but we are not rerendering the component when we click the add button , that means that we are not changing the state because react only rerenders when the state changes 
+
+so to fix this we are going to move circles into state so we have to import it from react 
+
+when we are updating mutable states, arrays and objects 
+
+if we want it to rerender we have to pass in a new array aka a new reference to a new array otherwise even if we push stuff onto it we are just telling react its the same array 
+
+so instead of changing the array we want to copy the array and then return that 
+
+so now its working and we can add it to the state and tell react to rerender
+
+but there is a more common way to do this 
+
+use the spread syntax 
+
+so instead of this 
+
+setCircles(circles => {
+            const newCircles = circles.slice()
+            newCircles.push("magenta")
+            return newCircles
+        })
+
+we get back 
+this after refactoring 
+
+const addCircle = () => {
+        setCircles(circles => [...circles, "magenta"])
+    }
+
+
+but the point is that we can not mutate an array or object and expect react to know that it has changed 
+
+the references will be compared 
+
+instead we will pass in a copy and then pass that into setCircles and that tells react it is a new array 
+
+_______________________________________________
+Color Buttons Demo
+_______________________________________________
+
+Next let's add some buttons to add some different colors 
+
+<button onClick={() => addCircle("peachpuff")}>Peachpuff</button>
+            <button onClick={() => addCircle("paleturquoise")}>Pale Turquoise</button>
+            <button onClick={() => addCircle("peachpuff")}>Peachpuff</button>
+            {circles.map((color, idx) => (
+                <Circle color={color} idx={idx} key={idx} />
+            ))}
+
+
+so now we have buttons that can do that 
+
+we should create a different component called colorButtons
+
+we broke it down more and made a single component for a color bUtton
+
+_______________________________________________
+Nested Mutable State 
+_______________________________________________
+
+we are going to update the color circles component now to take in an array of objects 
+
+we need color, x, and y 
+
+now we have circles that go in a random place on the viewport 
+
+now we are passing down mutable states and what if we want to update the position of a circle on a click 
+
+we need to be careful and think about how we want to update the state 
+
+the whole issue is that we want to make a copy of the array and alter the state 
+
+it is very common to use JS pure functions to make copies and update the state 
+
+we dont want to change the state directly 
+
